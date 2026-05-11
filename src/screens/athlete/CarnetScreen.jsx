@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Image, StyleSheet } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { DISC_COLORS, pagoLabel, pagoColor } from "../../constants/theme";
 import DiscBadge from "../../components/DiscBadge";
@@ -25,7 +25,7 @@ export default function CarnetScreen({ user, T }) {
           {/* Avatar */}
           <View style={s.avatarWrap}>
             {user.foto
-              ? null
+              ? <Image source={{ uri: user.foto }} style={s.avatarImg} />
               : <View style={[s.avatarFallback, { backgroundColor: "#FF5F03" }]}>
                   <Text style={s.avatarInitial}>{(user.displayNombre || user.nombre).charAt(0)}</Text>
                 </View>
@@ -96,6 +96,7 @@ const s = StyleSheet.create({
   stripSub:      { color: "rgba(255,255,255,0.8)", fontSize: 9, marginTop: 2 },
   content:       { flexDirection: "row", padding: 16, gap: 12, alignItems: "flex-start" },
   avatarWrap:    {},
+  avatarImg:     { width: 64, height: 64, borderRadius: 32 },
   avatarFallback:{ width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center" },
   avatarInitial: { color: "#fff", fontSize: 28, fontWeight: "700" },
   info:          { flex: 1, gap: 4 },

@@ -1,11 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { USERS } from "../constants/data";
 
 const KEY = "lcg_session";
 
-export async function login(userId) {
-  const user = USERS.find(u => u.id === userId);
-  if (!user) throw new Error("Usuario no encontrado");
+export async function login(user) {
   await AsyncStorage.setItem(KEY, JSON.stringify(user));
   return user;
 }
@@ -19,15 +16,17 @@ export async function getSession() {
   return raw ? JSON.parse(raw) : null;
 }
 
-export async function saveProfile(userId, { displayName, fotoUri }) {
-  if (displayName) await AsyncStorage.setItem(`lcg_dn_${userId}`, displayName);
-  if (fotoUri)     await AsyncStorage.setItem(`lcg_foto_${userId}`, fotoUri);
+export async function saveProfile(userId, { displayNombre, foto }) {
+  const existing = await getProfile(userId) || {};
+  const updated = { ...existing };
+  if (displayNombre !== undefined) updated.displayNombre = displayNombre;
+  if (foto !== undefined)          updated.foto = foto;
+  await AsyncStorage.setItem(`lcg_profile_${userId}`, JSON.stringify(updated));
 }
 
 export async function getProfile(userId) {
-  const displayName = await AsyncStorage.getItem(`lcg_dn_${userId}`);
-  const fotoUri     = await AsyncStorage.getItem(`lcg_foto_${userId}`);
-  return { displayName, fotoUri };
+  const raw = await AsyncStorage.getItem(`lcg_profile_${userId}`);
+  return raw ? JSON.parse(raw) : null;
 }
 
 export async function saveRegistro(form) {

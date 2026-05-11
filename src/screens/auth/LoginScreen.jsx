@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { USERS } from "../../constants/data";
 import PinInput from "../../components/PinInput";
@@ -22,6 +22,14 @@ export default function LoginScreen({ route, navigation, onLogin }) {
   const [error, setError] = useState("");
 
   const filteredUsers = USERS.filter(u => u.role === (role === "entrenador" ? "entrenador" : "atleta"));
+
+  useEffect(() => {
+    if (role === "publico") {
+      login({ role: "publico", nombre: "Visitante", id: "PUB" }).then(() => {
+        onLogin({ role: "publico", nombre: "Visitante", id: "PUB" });
+      });
+    }
+  }, []);
 
   const handleSelectUser = (u) => {
     setSelectedUser(u);
@@ -53,10 +61,7 @@ export default function LoginScreen({ route, navigation, onLogin }) {
     }
   };
 
-  if (role === "publico") {
-    onLogin({ role: "publico", nombre: "Visitante", id: "PUB" });
-    return null;
-  }
+  if (role === "publico") return null;
 
   return (
     <View style={[s.wrap, { backgroundColor: T.bg }]}>

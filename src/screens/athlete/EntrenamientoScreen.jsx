@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { EJERCICIOS, CAL_ITEMS, EST_ITEMS, getReps } from "../../constants/data";
 import { INTENSIDAD_COLOR } from "../../constants/theme";
@@ -13,25 +13,23 @@ export default function EntrenamientoScreen({ T }) {
   const [selectedEj, setSelectedEj] = useState(null);
   const [catTab, setCatTab] = useState(CATEGORIAS[0]);
 
-  const [checks, setChecks] = useState({
-    cal: CAL_ITEMS.map(() => false),
-    tec: [],
-    est: EST_ITEMS.map(() => false),
-  });
-
-  const calDone = checks.cal.every(Boolean);
-  const tecDone = checks.tec.length > 0 && checks.tec.every(Boolean);
-
-  const toggleCal = (i) => setChecks(c => ({ ...c, cal: c.cal.map((v, idx) => idx === i ? !v : v) }));
-  const toggleEst = (i) => setChecks(c => ({ ...c, est: c.est.map((v, idx) => idx === i ? !v : v) }));
+  const [calChecks, setCalChecks] = useState(CAL_ITEMS.map(() => false));
+  const [tecChecks, setTecChecks] = useState([]);
+  const [estChecks, setEstChecks] = useState(EST_ITEMS.map(() => false));
 
   const ejercicios = EJERCICIOS[catTab] || [];
 
-  const initTec = (n) => {
-    if (checks.tec.length !== n) setChecks(c => ({ ...c, tec: Array(n).fill(false) }));
-  };
+  const calDone = calChecks.every(Boolean);
+  const tecDone = tecChecks.length > 0 && tecChecks.every(Boolean);
 
-  const toggleTec = (i) => setChecks(c => ({ ...c, tec: c.tec.map((v, idx) => idx === i ? !v : v) }));
+  // Re-initialise tec checks whenever category or exercise list length changes
+  useEffect(() => {
+    setTecChecks(Array(ejercicios.length).fill(false));
+  }, [catTab, ejercicios.length]);
+
+  const toggleCal = (i) => setCalChecks(c => c.map((v, idx) => idx === i ? !v : v));
+  const toggleTec = (i) => setTecChecks(c => c.map((v, idx) => idx === i ? !v : v));
+  const toggleEst = (i) => setEstChecks(c => c.map((v, idx) => idx === i ? !v : v));
 
   return (
     <View style={[s.wrap, { backgroundColor: T.bg }]}>
@@ -40,13 +38,13 @@ export default function EntrenamientoScreen({ T }) {
         <View style={[s.card, { backgroundColor: T.card, borderColor: T.border }]}>
           <Text style={[s.cardTitle, { color: T.text }]}>Intensidad de sesión</Text>
           <View style={s.chips}>
-            {INTENSIDADES.map(i => {
-              const col = INTENSIDAD_COLOR[i];
+            {INTENSIDADES.map(int => {
+              const col = INTENSIDAD_COLOR[int];
               return (
-                <TouchableOpacity key={i}
-                  style={[s.chip, { borderColor: col.bg, backgroundColor: intensidad === i ? col.bg : "transparent" }]}
-                  onPress={() => setIntensidad(i)} activeOpacity={0.7}>
-                  <Text style={[s.chipTxt, { color: intensidad === i ? "#fff" : col.bg }]}>{i}</Text>
+                <TouchableOpacity key={int}
+                  style={[s.chip, { borderColor: col.bg, backgroundColor: intensidad === int ? col.bg : "transparent" }]}
+                  onPress={() => setIntensidad(int)} activeOpacity={0.7}>
+                  <Text style={[s.chipTxt, { color: intensidad === int ? "#fff" : col.bg }]}>{int}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -55,55 +53,53 @@ export default function EntrenamientoScreen({ T }) {
 
         {/* Calentamiento */}
         <FasePlan fase="🔥 Calentamiento" items={CAL_ITEMS} unlocked={true}
-          checks={checks.cal} onToggle={toggleCal} T={T} />
+          checks={calChecks} onToggle={toggleCal} T={T} />
 
         {/* Técnica */}
         <View style={[s.card, { backgroundColor: T.card, borderColor: T.border }]}>
           <Text style={[s.cardTitle, { color: T.text }]}>🤸 Técnica</Text>
-          {/* Category tabs */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
             {CATEGORIAS.map(c => (
               <TouchableOpacity key={c}
                 style={[s.catBtn, { borderColor: catTab === c ? T.secondary : T.border, backgroundColor: catTab === c ? T.secondaryLt : "transparent" }]}
-                onPress={() => { setCatTab(c); }} activeOpacity={0.7}>
+                onPress={() => setCatTab(c)} activeOpacity={0.7}>
                 <Text style={[s.catTxt, { color: catTab === c ? T.secondary : T.textSec }]}>{c}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {/* Exercise list */}
           {!calDone && (
             <View style={[s.locked, { backgroundColor: T.panel }]}>
               <Text style={[s.lockedTxt, { color: T.textMut }]}>🔒 Completa el calentamiento primero</Text>
             </View>
           )}
-          {calDone && ejercicios.map((ej, i) => {
-            if (checks.tec.length !== ejercicios.length) initTec(ejercicios.length);
-            return (
-              <TouchableOpacity key={ej.cod}
-                style={[s.ejRow, { borderBottomColor: T.border }]}
-                onPress={() => setSelectedEj(ej)} activeOpacity={0.8}>
-                <View style={[s.ejCheck, {
-                  backgroundColor: checks.tec[i] ? T.secondary : "transparent",
-                  borderColor: checks.tec[i] ? T.secondary : T.border
+
+          {calDone && ejercicios.map((ej, i) => (
+            <TouchableOpacity key={ej.cod}
+              style={[s.ejRow, { borderBottomColor: T.border }]}
+              onPress={() => setSelectedEj(ej)}
+              activeOpacity={0.8}>
+              <TouchableOpacity
+                style={[s.ejCheck, {
+                  backgroundColor: tecChecks[i] ? T.secondary : "transparent",
+                  borderColor: tecChecks[i] ? T.secondary : T.border
                 }]}
-                  onStartShouldSetResponder={() => true}
-                  onResponderGrant={() => toggleTec(i)}>
-                  {checks.tec[i] && <Text style={s.checkMark}>✓</Text>}
-                </View>
-                <View style={s.ejInfo}>
-                  <Text style={[s.ejNombre, { color: T.text }]}>{ej.nombre}</Text>
-                  <Text style={[s.ejMeta, { color: T.textMut }]}>{getReps(ej, intensidad)} · {ej.series}</Text>
-                </View>
-                <Text style={[s.ejArrow, { color: T.textMut }]}>›</Text>
+                onPress={(e) => { e.stopPropagation?.(); toggleTec(i); }}
+                activeOpacity={0.7}>
+                {tecChecks[i] && <Text style={s.checkMark}>✓</Text>}
               </TouchableOpacity>
-            );
-          })}
+              <View style={s.ejInfo}>
+                <Text style={[s.ejNombre, { color: T.text }]}>{ej.nombre}</Text>
+                <Text style={[s.ejMeta, { color: T.textMut }]}>{getReps(ej, intensidad)} · {ej.series}</Text>
+              </View>
+              <Text style={[s.ejArrow, { color: T.textMut }]}>›</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Estiramiento */}
+        {/* Estiramiento — unlocks only after both previous phases done */}
         <FasePlan fase="🧘 Estiramiento" items={EST_ITEMS} unlocked={calDone && tecDone}
-          checks={checks.est} onToggle={toggleEst} T={T} />
+          checks={estChecks} onToggle={toggleEst} T={T} />
       </ScrollView>
 
       <Lightbox ej={selectedEj} onClose={() => setSelectedEj(null)} intensidad={intensidad} T={T} />

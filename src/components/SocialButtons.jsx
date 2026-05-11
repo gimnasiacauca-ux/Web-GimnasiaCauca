@@ -6,7 +6,7 @@ export default function SocialButtons({ T, compact = false }) {
   const BTNS = [
     { label: "WhatsApp",  icon: "📱", color: "#25D366", url: WA_URL },
     { label: "Instagram", icon: "📸", color: "#E1306C", url: IG_URL },
-    { label: "Web",       icon: "🌐", color: T.primary, url: WEB_URL },
+    { label: "Web",       icon: "🌐", color: T?.primary ?? "#072C2C", url: WEB_URL },
   ];
   return (
     <View style={s.row}>
